@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toskinstaller"
+version = "0.1.0"
+description = "Portable Windows project-to-package builder by ToskeraLAB ART/TECH House"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "PySide6>=6.8,<7",
+  "jsonschema>=4.23,<5",
+]
+
+[project.optional-dependencies]
+build = ["pyinstaller>=6.10,<7"]
+test = ["pytest>=8.3,<9"]
+
+auto-detect = ["tomli>=2.0; python_version < '3.11'"]
+
+[project.scripts]
+toskinstaller = "toskinstaller.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

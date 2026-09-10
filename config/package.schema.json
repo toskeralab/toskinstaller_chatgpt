@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TOSKINSTALLER package configuration",
+  "type": "object",
+  "required": ["schema_version", "product_name", "version", "output_format", "architecture", "language", "progress_style"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "product_name": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "publisher": {"type": "string"},
+    "output_format": {"enum": ["exe", "msi", "portable", "both"]},
+    "architecture": {"enum": ["x64", "x86", "arm64"]},
+    "language": {"enum": ["pt-BR", "en-US"]},
+    "install_scope": {"enum": ["user", "machine"]},
+    "create_desktop_shortcut": {"type": "boolean"},
+    "create_start_menu_shortcut": {"type": "boolean"},
+    "logo": {"type": ["string", "null"]},
+    "license_file": {"type": ["string", "null"]},
+    "progress_style": {"enum": ["bar", "circular", "stages"]},
+    "theme": {"type": "object"},
+    "partners": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": true
+}
