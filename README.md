@@ -1,5 +1,4 @@
 # toskinstaller_chatgpt
-# toskinstaller_qwen
 # TOSKINSTALLER
 
 **Portable Windows app packager — turn any project into an installer or a portable executable.**
