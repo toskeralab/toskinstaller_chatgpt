@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Sequence
 
 
 @dataclass(slots=True)
@@ -20,9 +22,25 @@ def find_command(*names: str) -> str | None:
     return None
 
 
-def run_command(command: list[str], cwd: Path, log: Callable[[str], None]) -> ToolResult:
-    process = subprocess.run(command, cwd=cwd, text=True, capture_output=True, encoding="utf-8", errors="replace")
-    for line in (process.stdout + "\n" + process.stderr).splitlines():
+def run_command(command: Sequence[str], cwd: Path, log: Callable[[str], None]) -> ToolResult:
+    """Run a tool and stream its output to the application log."""
+    process = subprocess.Popen(
+        list(command),
+        cwd=cwd,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
+    )
+    lines: list[str] = []
+    assert process.stdout is not None
+    for line in process.stdout:
+        line = line.rstrip("\r\n")
+        lines.append(line)
         if line.strip():
             log(line)
-    return ToolResult(process.returncode, process.stdout, process.stderr)
+    returncode = process.wait()
+    output = "\n".join(lines)
+    return ToolResult(returncode, output, "" if returncode == 0 else output)

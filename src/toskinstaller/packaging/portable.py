@@ -1,23 +1,27 @@
+from __future__ import annotations
+
 from pathlib import Path
 import shutil
-import zipfile
+
+from .base import PackageArtifact, PackagingBackend
 
 
-def safe_relative(base: Path, candidate: Path) -> Path:
-    base = base.resolve()
-    candidate = candidate.resolve()
-    if candidate != base and base not in candidate.parents:
-        raise ValueError("Path escapes package root")
-    return candidate.relative_to(base)
+class PortableZipBackend(PackagingBackend):
+    """Portable baseline: a clean payload archive.
 
+    A true self-extracting EXE is intentionally a separate backend; this class
+    never mislabels a ZIP as an executable installer.
+    """
 
-def create_portable_package(executable: Path, destination: Path, product_name: str) -> Path:
-    destination.mkdir(parents=True, exist_ok=True)
-    payload = destination / "payload"
-    payload.mkdir(exist_ok=True)
-    target = payload / executable.name
-    shutil.copy2(executable, target)
-    archive = destination / f"{product_name}-portable.zip"
-    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.write(target, arcname=executable.name)
-    return archive
+    format_name = "portable-zip"
+
+    def package(self, executable: Path, output_dir: Path, product_name: str) -> PackageArtifact:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        payload = output_dir / "payload"
+        payload.mkdir(parents=True, exist_ok=True)
+        target = payload / executable.name
+        shutil.copy2(executable, target)
+        archive_base = output_dir / f"{product_name}-portable"
+        archive = Path(shutil.make_archive(str(archive_base), "zip", root_dir=payload))
+        self.log(f"Portable package created: {archive}")
+        return PackageArtifact(True, archive)
