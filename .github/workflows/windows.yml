@@ -15,8 +15,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install --upgrade pip
-      - run: pip install -e ".[test]"
-      - run: pytest -q
+      - run: python -m pip install -e ".[test]"
+      - run: python -m pytest -q
 
   package:
     needs: test
@@ -27,8 +27,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install --upgrade pip
-      - run: pip install -e ".[build]"
-      - run: pyinstaller --noconfirm --clean --onefile --name TOSKINSTALLER src/toskinstaller/__main__.py
+      - run: python -m pip install -e ".[build]"
+      - run: pyinstaller --noconfirm --clean --onefile --name TOSKINSTALLER scripts/build_entry.py
       - uses: actions/upload-artifact@v4
         with:
           name: TOSKINSTALLER-windows
