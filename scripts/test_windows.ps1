@@ -2,7 +2,8 @@
 param(
     [switch]$SkipInstall,
     [switch]$SkipPackageBuild,
-    [string]$Python = "python"
+    [string]$Python = "python",
+    [string]$PythonArguments = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,10 +13,28 @@ function Step([string]$Message) {
     Write-Host "`n=== $Message ===" -ForegroundColor Cyan
 }
 
-function Require-Command([string]$Name) {
-    $cmd = Get-Command $Name -ErrorAction SilentlyContinue
-    if (-not $cmd) { throw "Comando não encontrado: $Name" }
-    Write-Host "PASS: $Name -> $($cmd.Source)" -ForegroundColor Green
+function Get-PythonCommand() {
+    $arguments = @()
+    if (-not [string]::IsNullOrWhiteSpace($PythonArguments)) {
+        $arguments = $PythonArguments -split '\s+'
+    }
+    return @($Python) + $arguments
+}
+
+function Require-PythonCommand() {
+    $command = Get-PythonCommand
+    $cmd = Get-Command $command[0] -ErrorAction SilentlyContinue
+    if (-not $cmd) { throw "Comando não encontrado: $($command[0])" }
+    Write-Host "PASS: $($command -join ' ') -> $($cmd.Source)" -ForegroundColor Green
+}
+
+function Invoke-Python([Parameter(ValueFromRemainingArguments=$true)][string[]]$Arguments) {
+    $command = Get-PythonCommand
+    if ($command.Count -gt 1) {
+        & $command[0] @($command[1..($command.Count - 1)]) @Arguments
+    } else {
+        & $command[0] @Arguments
+    }
 }
 
 if ($env:OS -ne "Windows_NT") {
@@ -24,8 +43,8 @@ if ($env:OS -ne "Windows_NT") {
 
 Step "1. Verificando Windows e Python"
 Write-Host "Windows: OK"
-Require-Command $Python
-$versionText = & $Python --version 2>&1
+Require-PythonCommand
+$versionText = Invoke-Python --version 2>&1
 Write-Host $versionText
 $version = [version](($versionText -replace '^Python\s+', '').Trim())
 if ($version.Major -ne 3 -or $version.Minor -lt 12 -or $version.Minor -ge 15) {
@@ -33,26 +52,26 @@ if ($version.Major -ne 3 -or $version.Minor -lt 12 -or $version.Minor -ge 15) {
 }
 
 Step "2. Verificando ambiente Python"
-& $Python -m pip --version
+Invoke-Python -m pip --version
 
 if (-not $SkipInstall) {
     Step "3. Instalando TOSKINSTALLER em modo editável"
-    & $Python -m pip install --upgrade pip
-    & $Python -m pip install -e ".[test,build]"
+    Invoke-Python -m pip install --upgrade pip
+    Invoke-Python -m pip install -e ".[test,build]"
 }
 
 Step "4. Testes automatizados"
-& $Python -m pytest -q
+Invoke-Python -m pytest -q
 
 Step "5. Smoke test de importação"
-& $Python -c "import toskinstaller; print('PASS: import toskinstaller; versão=' + toskinstaller.__version__)"
+Invoke-Python -c "import toskinstaller; print('PASS: import toskinstaller; versão=' + toskinstaller.__version__)"
 
 if (-not $SkipPackageBuild) {
     Step "6. Verificando PyInstaller"
-    & $Python -m PyInstaller --version
+    Invoke-Python -m PyInstaller --version
 
     Step "7. Gerando TOSKINSTALLER.exe"
-    & $Python -m PyInstaller --noconfirm --clean --onefile --name TOSKINSTALLER scripts/build_entry.py
+    Invoke-Python -m PyInstaller --noconfirm --clean --onefile --name TOSKINSTALLER scripts/build_entry.py
 
     $exe = Join-Path (Get-Location) "dist\TOSKINSTALLER.exe"
     if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
