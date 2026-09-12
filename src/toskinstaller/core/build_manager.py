@@ -1,19 +1,11 @@
-import shutil
-import subprocess
-from dataclasses import dataclass
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Callable
 
+from .build_result import BuildResult
 from .project_detector import ProjectInfo
 from ..toolchains.python.pyinstaller import PyInstallerToolchain
-
-
-@dataclass(slots=True)
-class BuildResult:
-    success: bool
-    executable: Path | None
-    output_dir: Path
-    log: str
 
 
 class BuildManager:

@@ -6,7 +6,7 @@ from typing import Callable
 import sys
 
 from ...core.process_runner import find_command, run_command
-from ...core.build_manager import BuildResult
+from ...core.build_result import BuildResult
 
 
 @dataclass(slots=True)
@@ -20,8 +20,6 @@ class PyInstallerToolchain:
         executable = find_command("pyinstaller", "pyinstaller.exe")
         if executable:
             return [executable]
-        # Do not silently install or execute an unavailable tool. The caller gets
-        # a deterministic diagnostic explaining how to make the environment ready.
         try:
             import importlib.util
             if importlib.util.find_spec("PyInstaller") is not None:
