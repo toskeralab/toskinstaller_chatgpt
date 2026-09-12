@@ -28,8 +28,8 @@ Require-Command $Python
 $versionText = & $Python --version 2>&1
 Write-Host $versionText
 $version = [version](($versionText -replace '^Python\s+', '').Trim())
-if ($version.Major -ne 3 -or $version.Minor -lt 12) {
-    throw "Python 3.12+ é necessário. Versão detectada: $version"
+if ($version.Major -ne 3 -or $version.Minor -lt 12 -or $version.Minor -ge 15) {
+    throw "Python 3.12, 3.13 ou 3.14 é necessário. Versão detectada: $version"
 }
 
 Step "2. Verificando ambiente Python"
